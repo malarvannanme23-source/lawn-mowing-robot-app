@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password - Lawn Mower Pro</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .forgot-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .forgot-card {
+            background: rgba(20, 20, 40, 0.8);
+            border: 1px solid rgba(0, 255, 200, 0.2);
+            border-radius: 16px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .forgot-card h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .forgot-card .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #999;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(100, 150, 255, 0.05);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        input[type="email"]:focus {
+            outline: none;
+            background: rgba(100, 150, 255, 0.1);
+            border-color: rgba(0, 255, 200, 0.4);
+            box-shadow: 0 0 10px rgba(0, 255, 200, 0.1);
+        }
+
+        input[type="email"]::placeholder {
+            color: #666;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00ffc8, #00b8a3);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 255, 200, 0.3);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 200, 0.5);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        .reset-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message-box {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        .message-box.success {
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: #4ade80;
+            display: block;
+        }
+
+        .message-box.error {
+            background: rgba(255, 68, 68, 0.15);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+            display: block;
+        }
+
+        .separator {
+            text-align: center;
+            margin: 25px 0;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .back-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .back-links a {
+            color: #00ffc8;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .back-links a:hover {
+            color: #00ffff;
+            text-decoration: underline;
+        }
+
+        .info-box {
+            background: rgba(0, 255, 200, 0.05);
+            border: 1px solid rgba(0, 255, 200, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #00ffc8;
+        }
+
+        @media (max-width: 480px) {
+            .forgot-card {
+                padding: 30px 20px;
+            }
+
+            .forgot-card h1 {
+                font-size: 24px;
+            }
+
+            .back-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="forgot-container">
+        <div class="forgot-card">
+            <h1>LAWN MOWER PRO</h1>
+            <p class="subtitle">Reset Your Password</p>
+
+            <form id="resetForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="your@email.com" 
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <button type="button" id="resetBtn" class="reset-btn">Send Reset Link</button>
+            </form>
+
+            <div id="messageBox" class="message-box"></div>
+
+            <div class="info-box">
+                <strong>Check your email</strong><br>
+                We'll send you a link to reset your password. The link expires in 1 hour.
+            </div>
+
+            <div class="separator">────────────────</div>
+
+            <div class="back-links">
+                <a href="./login.html">← Back to Login</a>
+                <a href="./signup.html">Create Account →</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './js/firebase.js';
+        import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+        const resetBtn = document.getElementById('resetBtn');
+        const emailInput = document.getElementById('email');
+        const messageBox = document.getElementById('messageBox');
+        const resetForm = document.getElementById('resetForm');
+
+        resetBtn.addEventListener('click', handlePasswordReset);
+
+        async function handlePasswordReset(e) {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                showError('Please enter your email address');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+
+            resetBtn.disabled = true;
+            resetBtn.textContent = 'Sending...';
+            clearMessage();
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                emailInput.value = '';
+                showSuccess('Password reset email sent successfully. Check your inbox.');
+                resetForm.reset();
+            } catch (error) {
+                handleError(error);
+            } finally {
+                if (resetBtn.disabled) {
+                    resetBtn.disabled = false;
+                    resetBtn.textContent = 'Send Reset Link';
+                }
+            }
+        }
+
+        function handleError(error) {
+            let message = 'An error occurred. Please try again.';
+
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    message = 'No account found with this email address';
+                    break;
+                case 'auth/invalid-email':
+                    message = 'Please enter a valid email address';
+                    break;
+                case 'auth/too-many-requests':
+                    message = 'Too many reset requests. Please try again later.';
+                    break;
+                case 'auth/user-disabled':
+                    message = 'This account has been disabled';
+                    break;
+                case 'auth/operation-not-allowed':
+                    message = 'Password reset is not available for this account type';
+                    break;
+                default:
+                    message = error.message;
+            }
+
+            showError(message);
+        }
+
+        function showSuccess(message) {
+            messageBox.textContent = '✓ ' + message;
+            messageBox.className = 'message-box success';
+        }
+
+        function showError(message) {
+            messageBox.textContent = '✗ ' + message;
+            messageBox.className = 'message-box error';
+        }
+
+        function clearMessage() {
+            messageBox.textContent = '';
+            messageBox.className = 'message-box';
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        emailInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handlePasswordReset(e);
+            }
+        });
+    </script>
+</body>
+</html>

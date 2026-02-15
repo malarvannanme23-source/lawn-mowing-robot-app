@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#00ffc8">
+    <title>Lawn Mower Pro</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <script type="module">
+        import { auth } from './js/firebase.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+        console.log('Setting up auth guard...');
+
+        // Store current user globally for account display
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User logged in:', user.email);
+                currentUser = user;
+                // Expose user data to non-module scripts
+                window.currentUser = user;
+                window.userEmail = user.email;
+                window.displayName = user.displayName || 'Guest';
+                // User is authenticated, allow dashboard to load
+            } else {
+                console.log('No user detected, redirecting to login...');
+                // Clear user data
+                currentUser = null;
+                window.currentUser = null;
+                window.userEmail = null;
+                window.displayName = 'Guest';
+                // User is not authenticated, redirect to login
+                window.location.replace('./login.html');
+            }
+        });
+
+        // Handle logout button - uses Firebase v9 modular API only
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                console.log('User logged out successfully');
+                // Firebase auth state is cleared, auth guard will handle redirect
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Force redirect on error
+                window.location.replace('./login.html');
+            }
+        };
+    </script>
+    <nav class="sidebar-nav">
+        <div class="nav-item active" data-section="home-section">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">Home</div>
+        </div>
+        <div class="nav-item" data-section="control-section">
+            <div class="nav-icon">🎮</div>
+            <div class="nav-label">Control</div>
+        </div>
+        <div class="nav-item" data-section="stats-section">
+            <div class="nav-icon">📊</div>
+            <div class="nav-label">Stats</div>
+        </div>
+        <div class="nav-item" data-section="settings-section">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">Settings</div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- HOME SECTION -->
+        <section id="home-section" class="page-section active">
+            <div class="dashboard-grid">
+                <div class="status-card">
+                    <div class="status-label">Battery Level</div>
+                    <div class="status-value">78%</div>
+                    <div class="battery-bar">
+                        <div class="battery-fill" style="width: 78%;"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Connection</div>
+                    <div class="status-value">Wi-Fi Connected</div>
+                </div>
+
+                <!-- HEARTBEAT COUNTDOWN & CONNECTION WARNING -->
+                <div class="heartbeat-status-card status-card">
+                    <div class="heartbeat-header">
+                        <div class="heartbeat-icon">💓</div>
+                        <div class="heartbeat-label">Heartbeat Health</div>
+                    </div>
+                    <div class="heartbeat-countdown normal">
+                        <span id="heartbeat-countdown">5.0s</span>
+                    </div>
+                    <div id="connection-warning" class="connection-warning" style="display: none;">
+                        <div class="warning-icon">⚠️</div>
+                        <div id="connection-status-text" class="warning-text">Weak Signal</div>
+                    </div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <h1>LAWN MOWER PRO</h1>
+                    <p class="subtitle">Robot Control Dashboard</p>
+                    <div class="button-container">
+                        <button id="btn-start">START</button>
+                        <button id="btn-pause">PAUSE</button>
+                        <button id="btn-stop">STOP</button>
+                        <button id="btn-home">HOME</button>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value" id="status-display">IDLE</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Battery</div>
+                    <div class="stat-value" id="battery-display">85%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Signal</div>
+                    <div class="stat-value" id="signal-display">4G</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTROL SECTION -->
+        <section id="control-section" class="page-section">
+            <div class="dashboard-grid">
+                <div class="status-card">
+                    <div class="status-label">Battery Level</div>
+                    <div class="status-value">78%</div>
+                    <div class="battery-bar">
+                        <div class="battery-fill" style="width: 78%;"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Connection</div>
+                    <div class="status-value">Wi-Fi Connected</div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Control Mode</h2>
+                    <div class="mode-buttons">
+                        <button class="mode-btn active" id="manual-mode">Manual</button>
+                        <button class="mode-btn" id="autonomous-mode">Autonomous</button>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Robot Movement</h2>
+                    <div class="directional-controls">
+                        <div></div>
+                        <button class="arrow-btn" id="btn-up">▲</button>
+                        <div></div>
+                        <button class="arrow-btn" id="btn-left">◄</button>
+                        <button class="arrow-btn" id="btn-center">■</button>
+                        <button class="arrow-btn" id="btn-right">►</button>
+                        <div></div>
+                        <button class="arrow-btn" id="btn-down">▼</button>
+                        <div></div>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Safety Timeout</h2>
+                    <div class="safety-timeout" id="safety-timeout">
+                        <div class="safety-timer" id="safety-timer">30:00</div>
+                        <div class="safety-status" id="safety-status">Ready</div>
+                    </div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <button id="btn-emergency-stop" class="emergency-stop">🚨 EMERGENCY STOP</button>
+                    <div id="emergency-overlay" class="emergency-overlay hidden">
+                        <div class="emergency-confirm-panel">
+                            <div class="emergency-confirm-text">All controls will be disabled. Are you sure?</div>
+                            <div class="emergency-button-group">
+                                <button id="emergency-confirm" class="emergency-confirm-btn">Confirm</button>
+                                <button id="emergency-cancel" class="emergency-cancel-btn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="emergency-active-message" class="emergency-active-message hidden">
+                        🚨 EMERGENCY STOP ACTIVE - All Controls Disabled
+                    </div>
+                    <button id="btn-emergency-restart" class="btn-emergency-restart hidden">Emergency Restart</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS SECTION -->
+        <section id="stats-section" class="page-section">
+            <div class="dashboard-grid">
+                <div class="grid-card">
+                    <h2>Speed Control</h2>
+                    <div class="slider-group">
+                        <div class="slider-item">
+                            <label for="motor-speed">Motor Speed</label>
+                            <input type="range" id="motor-speed" class="speed-slider" min="0" max="100" value="50">
+                            <div class="slider-value">
+                                <span id="motor-speed-value">50</span>%
+                            </div>
+                        </div>
+                        <div class="slider-item">
+                            <label for="blade-speed">Blade Speed</label>
+                            <input type="range" id="blade-speed" class="speed-slider" min="0" max="100" value="50">
+                            <div class="slider-value">
+                                <span id="blade-speed-value">50</span>%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Live Status</h2>
+                    <div class="stat-card">
+                        <div class="stat-label">Mode</div>
+                        <div class="stat-value" id="mode-display">MANUAL</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Speed</div>
+                        <div class="stat-value" id="speed-display">50%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Direction</div>
+                        <div class="stat-value" id="direction-display">IDLE</div>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Live Robot Data</h2>
+                    <div class="stat-card">
+                        <div class="stat-label">Speed</div>
+                        <div class="stat-value" id="robot-speed">0.0 m/s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Motor Status</div>
+                        <div class="stat-value" id="motor-status">OFF</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Blade Status</div>
+                        <div class="stat-value" id="blade-status">OFF</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Obstacle Distance</div>
+                        <div class="stat-value" id="obstacle-distance">-- cm</div>
+                    </div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <h2>Lawn Coverage Map</h2>
+                    <div class="lawn-map-container">
+                        <div class="lawn-map-grid">
+                            <div class="robot-indicator"></div>
+                        </div>
+                        <div class="map-label">Boundary Visualization (Demo)</div>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>GPS Status</h2>
+                    <div class="gps-header">
+                        <span class="gps-icon">📍</span>
+                        <span class="gps-status-indicator" id="gps-status-indicator">Active</span>
+                    </div>
+                    <div class="gps-data">
+                        <div class="gps-row">
+                            <div class="gps-label">Latitude</div>
+                            <div class="gps-value" id="gps-latitude">-25.2345°</div>
+                        </div>
+                        <div class="gps-row">
+                            <div class="gps-label">Longitude</div>
+                            <div class="gps-value" id="gps-longitude">133.7654°</div>
+                        </div>
+                        <div class="gps-row">
+                            <div class="gps-label">Accuracy</div>
+                            <div class="gps-value" id="gps-accuracy">2.8 m</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Runtime</div>
+                    <div class="stat-value" id="runtime-stat">2h 34m</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Distance</div>
+                    <div class="stat-value" id="distance-stat">4.2 km</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Area</div>
+                    <div class="stat-value" id="area-stat">15.8 m²</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Battery Used</div>
+                    <div class="stat-value" id="battery-used-stat">45%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Speed</div>
+                    <div class="stat-value" id="avg-speed-stat">1.65 km/h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Obstacles</div>
+                    <div class="stat-value" id="obstacles-stat">3</div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <h2>Session Info</h2>
+                    <div class="card">
+                        <p><strong>Start Time:</strong> Today, 14:30</p>
+                        <p><strong>End Time:</strong> Today, 17:04</p>
+                        <p><strong>Weather:</strong> Clear</p>
+                        <p><strong>Efficiency:</strong> 94.5%</p>
+                    </div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <h2>Usage History</h2>
+                    <div class="usage-history-container">
+                        <div class="usage-card">
+                            <div class="usage-icon">⏱️</div>
+                            <div class="usage-label">Total Runtime</div>
+                            <div class="usage-value" id="total-runtime">1,450 min</div>
+                        </div>
+                        <div class="usage-card">
+                            <div class="usage-icon">📏</div>
+                            <div class="usage-label">Distance Covered</div>
+                            <div class="usage-value" id="total-distance">28,340 m</div>
+                        </div>
+                        <div class="usage-card">
+                            <div class="usage-icon">🌳</div>
+                            <div class="usage-label">Area Mowed</div>
+                            <div class="usage-value" id="total-area">385.6 m²</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SETTINGS SECTION -->
+        <section id="settings-section" class="page-section">
+            <div class="dashboard-grid">
+                <div class="grid-card full-width">
+                    <h1>Settings</h1>
+                    <p class="subtitle">Configuration & Preferences</p>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Account</h2>
+                    <div class="card">
+                        <p><strong>Username:</strong> <span id="account-username">Guest</span></p>
+                        <p><strong>Email:</strong> <span id="account-email">Not logged in</span></p>
+                    </div>
+                    <button id="account-logout-btn" class="btn-reset">Log Out</button>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Connectivity</h2>
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-bluetooth">Bluetooth</label>
+                        <input type="checkbox" id="toggle-bluetooth" class="toggle-input" checked>
+                        <label class="toggle-switch" for="toggle-bluetooth">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-wifi">Wi-Fi</label>
+                        <input type="checkbox" id="toggle-wifi" class="toggle-input">
+                        <label class="toggle-switch" for="toggle-wifi">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-gps">GPS</label>
+                        <input type="checkbox" id="toggle-gps" class="toggle-input" checked>
+                        <label class="toggle-switch" for="toggle-gps">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Display</h2>
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-dark-mode">Dark Mode</label>
+                        <input type="checkbox" id="toggle-dark-mode" class="toggle-input" checked>
+                        <label class="toggle-switch" for="toggle-dark-mode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-sound">Sound Effects</label>
+                        <input type="checkbox" id="toggle-sound" class="toggle-input" checked>
+                        <label class="toggle-switch" for="toggle-sound">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <label class="toggle-label" for="toggle-notifications">Notifications</label>
+                        <input type="checkbox" id="toggle-notifications" class="toggle-input" checked>
+                        <label class="toggle-switch" for="toggle-notifications">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <h2>Device Info</h2>
+                    <div class="card">
+                        <p><strong>Device Name:</strong> Lawn Mower Pro Alpha</p>
+                        <p><strong>Model:</strong> LMP-2024-v1</p>
+                        <p><strong>Firmware:</strong> v2.4.1</p>
+                        <p><strong>Serial Number:</strong> LMP0524001</p>
+                        <p style="margin-top: 15px; border-top: 1px solid var(--accent-border); padding-top: 15px;"><strong style="color: var(--accent-color);">©2024 Lawn Mower Pro</strong> - All Rights Reserved</p>
+                    </div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <button id="btn-reset" class="btn-reset">Reset to Defaults</button>
+                </div>
+
+                <div class="grid-card full-width queries-link-card">
+                    <button id="btn-submit-query" class="btn-view-queries" onclick="switchSection('customer-query-section')">SUBMIT CUSTOMER QUERY</button>
+                    <p class="queries-link-hint">Submit a query or get support for your robot</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUERIES SECTION -->
+        <section id="queries-section" class="page-section">
+            <div class="dashboard-grid">
+                <div class="grid-card full-width">
+                    <h1>Customer Queries</h1>
+                    <p class="subtitle">Submitted inquiries and support requests</p>
+                </div>
+
+                <div class="grid-card full-width">
+                    <div id="queries-loading" class="queries-loading" style="display: none;">
+                        <div class="loader"></div>
+                        <p>Loading queries...</p>
+                    </div>
+                    <div id="queries-error" class="queries-error" style="display: none;"></div>
+                    <div id="queries-empty" class="queries-empty" style="display: none;">
+                        <p>No customer queries yet</p>
+                    </div>
+                    <div id="queries-table-container" class="queries-table-container">
+                        <table id="queries-table" class="queries-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer Name</th>
+                                    <th>Email</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="queries-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid-card full-width">
+                    <button id="btn-export-queries" class="btn-export">EXPORT TO CSV</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CUSTOMER QUERY FORM SECTION -->
+        <section id="customer-query-section" class="page-section">
+            <div class="dashboard-grid">
+                <div class="grid-card full-width">
+                    <h1>Submit Customer Query</h1>
+                    <p class="subtitle">Get support or submit a query about your robot</p>
+                </div>
+
+                <div class="grid-card full-width">
+                    <form id="customerQueryForm" class="customer-query-form">
+                        <!-- Name Field -->
+                        <div class="form-group">
+                            <label for="queryName">Name *</label>
+                            <input type="text" id="queryName" name="name" placeholder="Your full name" minlength="2" required>
+                            <span class="error-message" id="nameError"></span>
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="form-group">
+                            <label for="queryEmail">Email *</label>
+                            <input type="email" id="queryEmail" name="email" placeholder="your@email.com" required>
+                            <span class="error-message" id="emailError"></span>
+                        </div>
+
+                        <!-- Phone Number Field -->
+                        <div class="form-group">
+                            <label for="queryPhone">Phone Number *</label>
+                            <input type="tel" id="queryPhone" name="phone" placeholder="1234567890" pattern="\d{10}" minlength="10" maxlength="10" required>
+                            <span class="form-hint">10 digits, numbers only</span>
+                            <span class="error-message" id="phoneError"></span>
+                        </div>
+
+                        <!-- Robot Serial Number Field -->
+                        <div class="form-group">
+                            <label for="querySerial">Robot Serial Number *</label>
+                            <input type="text" id="querySerial" name="serial" placeholder="LMP0524001AB" pattern="[a-zA-Z0-9]{12}" minlength="12" maxlength="12" required>
+                            <span class="form-hint">Exactly 12 alphanumeric characters</span>
+                            <span class="error-message" id="serialError"></span>
+                        </div>
+
+                        <!-- Message Field -->
+                        <div class="form-group">
+                            <label for="queryMessage">Message *</label>
+                            <textarea id="queryMessage" name="message" placeholder="Describe your question or issue..." minlength="10" rows="5" required></textarea>
+                            <span class="form-hint">Minimum 10 characters</span>
+                            <span class="error-message" id="messageError"></span>
+                        </div>
+
+                        <!-- Submit Button (type=button to avoid form submission conflicts) -->
+                        <button type="button" id="submitQueryBtn" class="btn-submit-query">Submit Query</button>
+                        
+                        <!-- Success Message -->
+                        <div id="querySuccessMsg" class="success-message" style="display: none;">
+                            <p>✅ Your query was submitted successfully!</p>
+                            <p>Our support team has received your request and will contact you within 3 working days.</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-section="home-section">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">Home</div>
+        </div>
+        <div class="nav-item" data-section="control-section">
+            <div class="nav-icon">🎮</div>
+            <div class="nav-label">Control</div>
+        </div>
+        <div class="nav-item" data-section="stats-section">
+            <div class="nav-icon">📊</div>
+            <div class="nav-label">Stats</div>
+        </div>
+        <div class="nav-item" data-section="settings-section">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">Settings</div>
+        </div>
+    </nav>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Define global switchSection function for navigation
+        window.switchSection = function(sectionId) {
+            var sections = document.querySelectorAll('.page-section');
+            var navItems = document.querySelectorAll('.nav-item');
+            
+            // Remove active class from all sections and nav items
+            sections.forEach(function(section) {
+                section.classList.remove('active');
+            });
+            navItems.forEach(function(item) {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to target section
+            var targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+        };
+
+        (function() {
+            var navItems = document.querySelectorAll('.nav-item');
+            var sections = document.querySelectorAll('.page-section');
+            var darkModeToggle = document.getElementById('toggle-dark-mode');
+            var accountUsernameEl = document.getElementById('account-username');
+            var accountEmailEl = document.getElementById('account-email');
+            var logoutBtn = document.getElementById('account-logout-btn');
+            
+            var username = window.displayName || 'Guest';
+            var email = window.userEmail || 'Not logged in';
+            
+            if (accountUsernameEl) {
+                accountUsernameEl.textContent = username;
+            }
+            if (accountEmailEl) {
+                accountEmailEl.textContent = email;
+            }
+            
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    window.handleLogout();
+                });
+            }
+            
+            var isDarkMode = localStorage.getItem('theme') !== 'light';
+            if (isDarkMode) {
+                document.body.classList.remove('light-theme');
+                if (darkModeToggle) {
+                    darkModeToggle.checked = true;
+                }
+            } else {
+                document.body.classList.add('light-theme');
+                if (darkModeToggle) {
+                    darkModeToggle.checked = false;
+                }
+            }
+            
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.body.classList.remove('light-theme');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.body.classList.add('light-theme');
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
+            
+            navItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var targetSection = this.getAttribute('data-section');
+                    
+                    sections.forEach(function(section) {
+                        section.classList.remove('active');
+                    });
+                    navItems.forEach(function(nav) {
+                        nav.classList.remove('active');
+                    });
+                    
+                    var activeSection = document.getElementById(targetSection);
+                    if (activeSection) {
+                        activeSection.classList.add('active');
+                    }
+                    
+                    this.classList.add('active');
+                });
+            });
+            
+        })();
+    </script>
+
+    <!-- QUERIES FIREBASE INTEGRATION -->
+    <script type="module">
+        import { app } from './js/firebase-config.js';
+        import { getDatabase, ref, query, orderByChild, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        const db = getDatabase(app);
+        let allQueries = [];
+
+        // Load and display queries on page load
+        function loadQueries() {
+            const queriesRef = ref(db, 'queries');
+            
+            // Set up real-time listener
+            onValue(queriesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    allQueries = [];
+                    const data = snapshot.val();
+                    
+                    // Convert object to array and add IDs
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            allQueries.push({
+                                id: key,
+                                ...data[key]
+                            });
+                        }
+                    }
+                    
+                    // Sort by timestamp (newest first)
+                    allQueries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    
+                    displayQueries();
+                } else {
+                    allQueries = [];
+                    showEmptyState();
+                }
+            }, (error) => {
+                console.error('Error loading queries:', error);
+                showErrorState('Failed to load queries: ' + error.message);
+            });
+        }
+
+        function displayQueries() {
+            const tbody = document.getElementById('queries-tbody');
+            const container = document.getElementById('queries-table-container');
+            const emptyMsg = document.getElementById('queries-empty');
+            const errorMsg = document.getElementById('queries-error');
+            const loading = document.getElementById('queries-loading');
+            
+            // Hide loading and error states
+            if (loading) loading.style.display = 'none';
+            if (errorMsg) errorMsg.style.display = 'none';
+            
+            if (allQueries.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            // Clear existing rows
+            tbody.innerHTML = '';
+            
+            // Show table
+            if (container) container.style.display = 'block';
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            
+            // Add rows for each query
+            allQueries.forEach(function(query) {
+                const row = document.createElement('tr');
+                
+                // Format timestamp
+                const dateStr = query.timestamp ? 
+                    new Date(query.timestamp).toLocaleString() : 'N/A';
+                
+                // Get status with styling
+                const status = query.status || 'new';
+                const statusClass = status === 'responded' ? 'status-responded' : 'status-new';
+                const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+                
+                // Truncate message for display
+                const messagePreview = (query.message || '').substring(0, 50) + 
+                    ((query.message && query.message.length > 50) ? '...' : '');
+                
+                row.innerHTML = `
+                    <td>${dateStr}</td>
+                    <td>${query.name || 'N/A'}</td>
+                    <td><a href="mailto:${query.email || ''}" style="color: var(--accent-color); text-decoration: none;">${query.email || 'N/A'}</a></td>
+                    <td title="${query.message || ''}">${messagePreview}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function showEmptyState() {
+            const container = document.getElementById('queries-table-container');
+            const emptyMsg = document.getElementById('queries-empty');
+            const errorMsg = document.getElementById('queries-error');
+            const loading = document.getElementById('queries-loading');
+            
+            if (container) container.style.display = 'none';
+            if (emptyMsg) emptyMsg.style.display = 'block';
+            if (errorMsg) errorMsg.style.display = 'none';
+            if (loading) loading.style.display = 'none';
+        }
+
+        function showErrorState(message) {
+            const container = document.getElementById('queries-table-container');
+            const emptyMsg = document.getElementById('queries-empty');
+            const errorMsg = document.getElementById('queries-error');
+            const loading = document.getElementById('queries-loading');
+            
+            if (container) container.style.display = 'none';
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            if (errorMsg) {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = message;
+            }
+            if (loading) loading.style.display = 'none';
+        }
+
+        function showLoadingState() {
+            const container = document.getElementById('queries-table-container');
+            const emptyMsg = document.getElementById('queries-empty');
+            const errorMsg = document.getElementById('queries-error');
+            const loading = document.getElementById('queries-loading');
+            
+            if (loading) loading.style.display = 'flex';
+            if (container) container.style.display = 'none';
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            if (errorMsg) errorMsg.style.display = 'none';
+        }
+
+        // CSV Export functionality
+        function exportToCSV() {
+            if (allQueries.length === 0) {
+                alert('No queries to export');
+                return;
+            }
+            
+            // Prepare CSV header
+            let csv = 'Date,Name,Email,Message,Status\n';
+            
+            // Add data rows
+            allQueries.forEach(function(query) {
+                const dateStr = query.timestamp ? 
+                    new Date(query.timestamp).toLocaleString() : 'N/A';
+                const name = (query.name || '').replace(/"/g, '""');
+                const email = query.email || '';
+                const message = (query.message || '').replace(/"/g, '""');
+                const status = query.status || 'new';
+                
+                csv += `"${dateStr}","${name}","${email}","${message}","${status}"\n`;
+            });
+            
+            // Create blob and download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            // Format filename with current date
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + 
+                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(now.getDate()).padStart(2, '0');
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `queries-${dateStr}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize queries on page load
+        showLoadingState();
+        loadQueries();
+
+        // Handle CSV export button
+        const exportBtn = document.getElementById('btn-export-queries');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportToCSV);
+        }
+
+        // Expose functions to global scope if needed
+        window.loadQueries = loadQueries;
+        window.exportToCSV = exportToCSV;
+    </script>
+
+    <!-- EMAILJS CUSTOMER QUERY FORM -->
+    <!-- EmailJS @browser v4 CDN - Latest stable version -->
+    <!-- NOTE: Using defer attribute to ensure scripts load after DOM is ready -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+    
+    <script defer>
+        // ====================================
+        // EMAILJS CONFIGURATION (v4)
+        // ====================================
+        // Credentials from: https://www.emailjs.com/
+        // Service: Gmail (already configured)
+        // Using @emailjs/browser v4 (NOT deprecated emailjs-com)
+        
+        const EMAILJS_PUBLIC_KEY = 'szwPhTQF7wZ2aNmqE';     // Public key from emailjs.com
+        const EMAILJS_SERVICE_ID = 'service_peics33';     // Gmail service ID
+        const TEAM_TEMPLATE_ID = 'template_ubx703m';      // Team notification template
+        const AUTO_REPLY_TEMPLATE_ID = 'template_8n40qcr';  // Customer auto-reply template
+
+        // Initialize EmailJS only when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📧 EmailJS: Initializing v4...');
+            
+            // Verify emailjs library loaded from CDN
+            if (typeof emailjs !== 'undefined') {
+                emailjs.init({
+                    publicKey: EMAILJS_PUBLIC_KEY
+                });
+                console.log('✅ EmailJS loaded successfully and initialized with config object');
+            } else {
+                console.error('❌ EmailJS: Library failed to load from CDN');
+                console.error('   Expected CDN: https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js');
+                return;
+            }
+
+            // DOM elements for customer query form
+            const form = document.getElementById('customerQueryForm');
+            const nameInput = document.getElementById('queryName');
+            const emailInput = document.getElementById('queryEmail');
+            const phoneInput = document.getElementById('queryPhone');
+            const serialInput = document.getElementById('querySerial');
+            const messageInput = document.getElementById('queryMessage');
+            const submitBtn = document.getElementById('submitQueryBtn');
+            const successMsg = document.getElementById('querySuccessMsg');
+
+            if (!form || !submitBtn) {
+                console.error('❌ Form elements not found in DOM');
+                return;
+            }
+
+            // ====================================
+            // FORM VALIDATION & BUTTON STATE
+            // ====================================
+            // BUTTON DISABLED BEHAVIOR:
+            // - Button disabled until ALL fields valid
+            // - Message field requires minimum 10 characters (HTML5 minlength)
+            // - Button name field requires minimum 2 characters
+            // - Email field requires valid email format
+            // - Phone requires exactly 10 digits
+            // - Serial requires exactly 12 alphanumeric characters
+            
+            function updateButtonState() {
+                const isFormValid = form.checkValidity();
+                submitBtn.disabled = !isFormValid;
+                
+                // Log which field is preventing submission
+                if (!isFormValid && messageInput.value.length < 10) {
+                    console.log('⏳ Button disabled: Message needs ' + (10 - messageInput.value.length) + ' more characters');
+                }
+            }
+
+            // Listen for input changes on the form to update button state
+            form.addEventListener('input', updateButtonState);
+
+            // Auto-strip non-digit characters from phone input
+            phoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+                updateButtonState(); // Re-check validation after phone change
+            });
+
+            // Initialize button state on page load
+            updateButtonState();
+
+            // ====================================
+            // SUBMIT BUTTON CLICK HANDLER
+            // ====================================
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('📝 Submit Query button clicked');
+
+                // Validate form with browser's HTML5 validation
+                if (!form.checkValidity()) {
+                    console.warn('⚠️ Form validation failed - using browser validation UI');
+                    form.reportValidity(); // Shows validation errors to user
+                    return;
+                }
+                
+                console.log('✓ Form validation passed - all fields valid');
+
+                // CRITICAL: Verify EmailJS is initialized before sending
+                if (typeof emailjs === 'undefined') {
+                    console.error('❌ CRITICAL: EmailJS library not loaded');
+                    alert('❌ Email service is not available. Please refresh the page and try again.');
+                    return;
+                }
+
+                console.log('✓ EmailJS library available - proceeding with submission');
+
+                // Collect form data
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim();
+                const phone = phoneInput.value.trim();
+                const serial = serialInput.value.trim();
+                const message = messageInput.value.trim();
+
+                console.log('📧 Form submitted by:', name, '(' + email + ')');
+                console.log('   Message length:', message.length + ' characters (min: 10)');
+
+                // Disable button during submission to prevent double-submission
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+
+                // STANDARDIZED EMAIL PARAMETERS (all templates use customer_email for recipient)
+                // NOTE: Both templates must define their own "To Email" using {{customer_email}}
+                const emailParams = {
+                    customer_name: name,
+                    customer_email: email,
+                    customer_phone: phone,
+                    robot_serial: serial,
+                    message: message
+                };
+
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('📋 EMAIL PARAMETERS:');
+                console.log('   Name: ' + emailParams.customer_name);
+                console.log('   Recipient Email: ' + emailParams.customer_email);
+                console.log('   Phone: ' + emailParams.customer_phone);
+                console.log('   Serial: ' + emailParams.robot_serial);
+                console.log('   Message: ' + emailParams.message.substring(0, 50) + (emailParams.message.length > 50 ? '...' : ''));
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                // Variable to store team response for logging in second .then()
+                var teamResponse;
+
+                // Send team notification email first, then auto-reply
+                console.log('📧 Step 1: Sending TEAM NOTIFICATION email...');
+                console.log('   Template: ' + TEAM_TEMPLATE_ID);
+                emailjs.send(EMAILJS_SERVICE_ID, TEAM_TEMPLATE_ID, emailParams)
+                    .then(function(response) {
+                        teamResponse = response;
+                        console.log('✓ Step 1 Complete: Team notification sent (Status: ' + teamResponse.status + ')');
+
+                        // VALIDATE: Check if customer_email exists before sending auto-reply
+                        // This prevents the 422 "recipients address is empty" error
+                        if (!emailParams.customer_email || emailParams.customer_email.trim() === '') {
+                            console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            console.warn('⚠️ Step 2 SKIPPED: Auto-reply recipient is empty');
+                            console.warn('   customer_email value: "' + (emailParams.customer_email || 'undefined') + '"');
+                            console.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            
+                            // Return mock response to continue chain successfully
+                            return { 
+                                status: 200, 
+                                text: 'Auto-reply skipped - no recipient',
+                                skipped: true 
+                            };
+                        }
+
+                        // Recipient exists - send auto-reply email
+                        console.log('📧 Step 2: Sending CUSTOMER AUTO-REPLY email...');
+                        console.log('   Template: ' + AUTO_REPLY_TEMPLATE_ID);
+                        console.log('   Auto-reply recipient: ' + emailParams.customer_email);
+                        return emailjs.send(EMAILJS_SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, emailParams);
+                    })
+                    .then(function(autoReplyResponse) {
+                        // Handle both skipped and sent auto-reply responses
+                        if (autoReplyResponse.skipped) {
+                            console.log('✓ Step 2 Complete: Auto-reply skipped (recipient empty)');
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            console.log('✅ SUCCESS: Team notification delivered!');
+                            console.log('   - Team notification: ' + teamResponse.status);
+                            console.log('   - Auto-reply: SKIPPED (no recipient)');
+                        } else {
+                            console.log('✓ Step 2 Complete: Auto-reply sent (Status: ' + autoReplyResponse.status + ')');
+                            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                            console.log('✅ SUCCESS: Both emails sent successfully!');
+                            console.log('   - Team notification: ' + teamResponse.status);
+                            console.log('   - Customer auto-reply: ' + autoReplyResponse.status);
+                        }
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                        // ===== SUCCESS STATE =====
+                        // Hide form, show success message, disable button
+                        form.style.display = 'none';
+                        successMsg.style.display = 'block';
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Submit Query';
+
+                        console.log('✓ Success message displayed');
+                        console.log('✓ Form hidden and button disabled');
+
+                        // After 3 seconds: reset form and restore UI
+                        setTimeout(() => {
+                            console.log('⏱️ 3 seconds elapsed - resetting form...');
+                            
+                            // Reset form fields
+                            form.reset();
+                            
+                            // Show form again, hide success message
+                            form.style.display = 'flex';
+                            successMsg.style.display = 'none';
+                            
+                            // Re-enable button based on form validation
+                            submitBtn.disabled = false;
+                            updateButtonState();
+                            
+                            console.log('✓ Form reset and ready for new submission');
+                        }, 3000);
+                    })
+                    .catch(function(error) {
+                        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                        console.error('❌ ERROR: Email submission failed');
+                        console.error('   Error object:', error);
+                        if (error.message) {
+                            console.error('   Message: ' + error.message);
+                        }
+                        if (error.status) {
+                            console.error('   Status Code: ' + error.status);
+                        }
+                        if (error.text) {
+                            console.error('   Response: ' + error.text);
+                        }
+                        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                        console.error('⚠️ POSSIBLE CAUSES:');
+                        console.error('   - Team email: Check team template ID and recipient list');
+                        console.error('   - Auto-reply: Verify template has {{customer_email}} as To Email');
+                        console.error('   - Recipients: Ensure recipient email address is not empty');
+
+                        // Show error to user with helpful hint for recipients error
+                        let errorMsg = 'Email submission failed.';
+                        if (error.message) {
+                            errorMsg += '\n\nError: ' + error.message;
+                        }
+                        if (error.status) {
+                            errorMsg += '\nStatus: ' + error.status;
+                        }
+                        if (error.text && error.text.includes('recipients')) {
+                            errorMsg += '\n\n💡 TIP: Check that auto-reply template To Email field is set to {{customer_email}}';
+                        }
+
+                        alert('❌ ' + errorMsg + '\n\nPlease try again or contact support.');
+
+                        // Re-enable button for retry
+                        submitBtn.textContent = 'Submit Query';
+                        submitBtn.disabled = false;
+                        updateButtonState();
+                    });
+            });
+        }); // End of DOMContentLoaded
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/js/service-worker.js').catch(function(error) {
+                // Service worker registration failed, app will still work
+            });
+        }
+    </script>
+    <!-- Safety Watchdog System -->
+    <script src="js/safety-watchdog.js"></script>
+</body>
+</html>

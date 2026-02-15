@@ -1,0 +1,325 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                        QUICK REFERENCE CARD                                  ║
+║                  Safety Timeout Watchdog System v1.0                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ SYSTEM STATES AT A GLANCE                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────┬──────────────┬─────────────────────┬────────────┬──────────────┐
+│ STATE       │ HEARTBEAT    │ COLOR & COUNTDOWN   │ UI CHANGE  │ CONTROLS     │
+├─────────────┼──────────────┼─────────────────────┼────────────┼──────────────┤
+│ NORMAL      │ < 4 seconds  │ 🟢 GREEN (5.0s...)  │ None       │ ENABLED      │
+│             │ old          │                     │            │ (clickable)  │
+├─────────────┼──────────────┼─────────────────────┼────────────┼──────────────┤
+│ WARNING     │ 4-5 seconds  │ 🟠 ORANGE (pulsing) │ Warning    │ ENABLED      │
+│             │ old          │ Countdown: 1s...0s  │ box shown  │ (usable      │
+│             │              │                     │            │  but warned) │
+├─────────────┼──────────────┼─────────────────────┼────────────┼──────────────┤
+│ EMERGENCY   │ > 5 seconds  │ 🔴 RED (pulsing)    │ Red banner │ DISABLED     │
+│             │ old          │ Countdown: 0.0s     │ + Restart  │ (grayed      │
+│             │ (LOST)       │                     │ button     │  out)        │
+├─────────────┼──────────────┼─────────────────────┼────────────┼──────────────┤
+│ RECOVERY    │ Resumes      │ 🟢 GREEN again      │ Banner     │ Still        │
+│             │              │                     │ hides      │ disabled     │
+│             │              │                     │ Restart    │ (wait for    │
+│             │              │                     │ clickable  │ user click)  │
+└─────────────┴──────────────┴─────────────────────┴────────────┴──────────────┘
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 30-SECOND QUICK START                                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+ESP32:
+  1. Edit WiFi and Firebase keys in esp32-heartbeat.ino
+  2. Upload to ESP32
+  3. Check Serial Monitor for "💓 Heartbeat sent" every 2.5s
+
+Firebase:
+  1. Go to Firebase Console → Realtime Database → Rules
+  2. Copy FIREBASE-RULES.json content
+  3. Publish
+
+Web:
+  1. Refresh browser
+  2. Check HOME section for "Heartbeat Health" card (green)
+
+✅ Done!
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CRITICAL THRESHOLDS                                                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Time Since Last Beat          System State          UI Color    Action Needed
+─────────────────────────────────────────────────────────────────────────────
+0 - 4000ms (0 - 4 seconds)    ✓ NORMAL              GREEN       None
+4000 - 5000ms (4 - 5 sec)     ⚠️ WEAK SIGNAL        ORANGE      User aware
+> 5000ms (5+ seconds)         🔴 EMERGENCY          RED         STOP & RESTART
+
+Monitoring runs every 200ms (checks 5 times per second)
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ WHAT HAPPENS WHEN CONNECTION LOST                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+T=0s      No heartbeat for >5 seconds
+T=5.05s   EMERGENCY triggered automatically:
+          ├─ Write emergency/active = true to Firebase
+          ├─ Show RED card with 0.0s countdown
+          ├─ Show RED emergency banner
+          ├─ DISABLE all control buttons
+          ├─ Show "Emergency Restart" button (disabled - no beat yet)
+          └─ Console: "🚨 EMERGENCY TRIGGERED: HEARTBEAT TIMEOUT"
+
+T=6-40s   Waiting for connection to restore...
+          └─ User sees RED state, cannot control robot
+
+T=40s     Heartbeat resumes:
+          ├─ Show GREEN card with 5.0s countdown
+          ├─ Enable "Emergency Restart" button (NOW CLICKABLE)
+          ├─ Console: "💓 Heartbeat received"
+          └─ User must click restart
+
+T=41s     User clicks "Emergency Restart":
+          ├─ Write emergency/active = false to Firebase
+          ├─ Re-enable all buttons (500ms later)
+          ├─ Hide red banner
+          ├─ Hide restart button
+          ├─ Console: "🔄 EMERGENCY RESTART INITIATED"
+          └─ System ready for operation
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FILES YOU NEED TO KNOW ABOUT                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+CORE CODE:
+  js/safety-watchdog.js          Web monitoring logic (loads automatically)
+  esp32-heartbeat.ino            ESP32 code (upload to board)
+
+GUIDES TO READ:
+  QUICK-START.md                 5-minute setup
+  SAFETY-TIMEOUT-GUIDE.md        Detailed part-by-part guide
+  SYSTEM-FLOWS.md                Architecture and timing diagrams
+
+CONFIGURATION:
+  FIREBASE-RULES.json            Copy these to Firebase Console
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING IN 30 SECONDS                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+NO HEARTBEAT CARD?
+  └─ Hard refresh (Ctrl+Shift+R), check browser console
+
+CARD FROZEN AT 5.0s?
+  └─ Check Firebase is connected (internet OK?)
+
+HEARTBEAT NOT UPDATING?
+  └─ Check Serial Monitor on ESP32 (sending heartbeats?)
+
+EMERGENCY STUCK ON?
+  └─ Did you click "Emergency Restart"? (button appears after heartbeat returns)
+
+NEED MORE HELP?
+  └─ Read SAFETY-TIMEOUT-GUIDE.md (detailed troubleshooting section)
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FIREBASE PATHS                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Write by ESP32 every 2.5 seconds:
+  /robot/lastHeartbeat           [current timestamp in milliseconds]
+
+Read by Web every 200ms:
+  /robot/lastHeartbeat           [timestamp - used to check staleness]
+
+Write by Web when emergency:
+  /robot/emergency/active        [true = emergency, false = cleared]
+
+Read by Web to show status:
+  /robot/emergency/active        [triggers button disable/enable]
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ EXPECTED CONSOLE OUTPUT                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+On Page Load:
+  🛡️ Initializing Safety Watchdog System...
+  ✓ Heartbeat monitoring started
+
+When Heartbeat Received:
+  💓 Heartbeat received: 2026-02-05T14:23:45.000Z
+
+When Emergency Triggers (>5 seconds):
+  🚨 EMERGENCY TRIGGERED: HEARTBEAT TIMEOUT (>5 seconds)
+  🛑 All motors STOPPED - Fail-safe engaged
+  ✓ Emergency state written to Firebase
+  🔒 All controls LOCKED - Emergency mode active
+
+When User Restarts:
+  🔄 EMERGENCY RESTART INITIATED BY USER
+  ✓ Emergency flag cleared
+  ✓ Controls re-enabled
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CONFIGURATION QUICK REFERENCE                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+In esp32-heartbeat.ino:
+
+  Line 14:  #define WIFI_SSID "..."            ← Your WiFi network name
+  Line 15:  #define WIFI_PASSWORD "..."        ← Your WiFi password
+  Line 16:  #define FIREBASE_AUTH "..."        ← Firebase API key
+  Line 46:  const unsigned long HEARTBEAT_INTERVAL = 2500;  ← Write interval
+
+In js/safety-watchdog.js:
+
+  Line 9:   heartbeatTimeout: 5000             ← Emergency trigger (ms)
+  Line 10:  warningThreshold: 4000             ← Orange warning (ms)
+  Line 11:  heartbeatCheckInterval: 200        ← Polling frequency (ms)
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ TESTING CHECKLIST                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+✓ TEST 1: Normal Operation (should be GREEN)
+  [ ] Heartbeat card visible on HOME section
+  [ ] Countdown shows 5.0s in green
+  [ ] Message: "✓ Connected"
+  [ ] All controls enabled
+
+✓ TEST 2: Simulate Loss (should turn RED)
+  [ ] Comment sendHeartbeat() in ESP32
+  [ ] Re-upload to ESP32
+  [ ] After 4s: Card turns ORANGE ⚠️
+  [ ] After 5s: Card turns RED 🔴
+  [ ] All buttons disabled
+  [ ] Emergency Restart button shows
+
+✓ TEST 3: Recovery (should be GREEN again)
+  [ ] Uncomment sendHeartbeat()
+  [ ] Re-upload to ESP32
+  [ ] Heartbeat resumes
+  [ ] Card turns GREEN
+  [ ] Restart button becomes clickable
+
+✓ TEST 4: Manual Restart
+  [ ] Click "Emergency Restart"
+  [ ] Controls re-enable
+  [ ] System ready
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ SAFETY GUARANTEES                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+✅ Automatic Fail-Safe
+   Loss of heartbeat >5 seconds = IMMEDIATE stop (no delays)
+
+✅ Manual Recovery Only
+   Cannot restart until heartbeat resumes + user clicks button
+
+✅ Visual Warnings
+   User sees orange warning 1 second BEFORE emergency
+
+✅ Real-Time Response
+   System checks every 200ms (5x per second) = instant detection
+
+✅ No Auto-Restart
+   Recovery requires explicit user action (safer)
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ WHAT TO DO IF IT DOESN'T WORK                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Check Serial Monitor on ESP32 (see heartbeat every 2-3s?)
+   → If YES: ESP32 is working
+   → If NO: Check WiFi and Firebase credentials
+
+2. Go to Firebase Console → Realtime Database
+   Look for: /robot/lastHeartbeat (should update every 2-3s)
+   → If updating: Firebase is working
+   → If not: Check rules are published
+
+3. Open F12 Browser Console
+   Look for: 🛡️ Initializing Safety Watchdog System...
+   → If yes: safety-watchdog.js loaded
+   → If no: Check internet connection
+
+4. Refresh browser and check HOME section
+   Look for: "Heartbeat Health" card with countdown
+   → If yes: UI is working
+   → If no: Check index.html has heartbeat-countdown element
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PRODUCTION CHECKLIST                                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Before Deploy:
+  ☐ ESP32 heartbeat verified in Serial Monitor
+  ☐ Firebase rules published (no red warning)
+  ☐ Web page loads without console errors
+  ☐ All 4 tests pass
+
+During Deploy:
+  ☐ Upload esp32-heartbeat.ino to device
+  ☐ Deploy web dashboard
+  ☐ Monitor /robot/lastHeartbeat in Firebase
+
+After Deploy:
+  ☐ Test with real robot
+  ☐ Verify emergency stop works
+  ☐ Check automatic restart not triggering
+  ☐ Monitor for errors
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ KEY NUMBERS TO REMEMBER                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+ESP32 writes every:     2.5 seconds (2500ms)
+Web checks every:       0.2 seconds (200ms)
+Warning at:             4.0 seconds (4000ms)
+Emergency at:           5.0 seconds (5000ms)
+Safety margin:          2x          (5000/2500)
+Max latency:            200ms       (detection speed)
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ QUICK START CHECKLIST                                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+☐ 1. Install Arduino libraries (Firebase + ArduinoJson)
+☐ 2. Edit WiFi/Firebase in esp32-heartbeat.ino
+☐ 3. Upload to ESP32
+☐ 4. Verify Serial Monitor shows heartbeat
+☐ 5. Copy Firebase rules
+☐ 6. Publish Firebase rules
+☐ 7. Refresh web browser
+☐ 8. Verify heartbeat card appears (green)
+☐ 9. Test connection loss scenario
+☐ 10. Deploy to production
+
+Time Needed: 10-15 minutes
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+REMEMBER: This system is fail-safe by design.
+If no heartbeat appears for 5 seconds, ALL MOTORS STOP immediately.
+This is intentional and provides maximum safety.
+
+═════════════════════════════════════════════════════════════════════════════

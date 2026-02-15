@@ -1,0 +1,110 @@
+/*
+  FIREBASE REALTIME DATABASE SECURITY RULES
+  For Safety Timeout Watchdog System
+  
+  Location: Firebase Console → Realtime Database → Rules tab
+  
+  SETUP:
+  1. Go to https://console.firebase.google.com
+  2. Select project: "lawn-mower-pro-eac52"
+  3. Click "Realtime Database" in left menu
+  4. Click "Rules" tab at the top
+  5. Copy the rules below
+  6. Click "Publish"
+*/
+
+{
+  "rules": {
+    // ========================================
+    // ROBOT HEARTBEAT & EMERGENCY CONTROL
+    // ========================================
+    "robot": {
+      // ✓ Allow ESP32 to write heartbeat every 2-3 seconds
+      "lastHeartbeat": {
+        ".read": true,   // Allow web dashboard to read
+        ".write": true,  // Allow ESP32 to write
+        ".validate": "newData.isNumber()"  // Must be a number (timestamp)
+      },
+      
+      // ✓ Allow emergency stop flag reads/writes
+      "emergency": {
+        "active": {
+          ".read": true,
+          ".write": true,
+          ".validate": "newData.isBoolean()"  // Must be true/false
+        }
+      },
+      
+      // ✓ Allow robot status broadcasts
+      "status": {
+        ".read": true,
+        ".write": true
+      },
+      
+      // ✓ Allow robot commands from web dashboard
+      "command": {
+        ".read": true,
+        ".write": true
+      }
+    },
+
+    // ========================================
+    // WEB DASHBOARD CONNECTION STATE
+    // ========================================
+    "web": {
+      "connection": {
+        "connected": {
+          ".read": true,
+          ".write": true,
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    // ========================================
+    // TEST DATA FOR VERIFICATION
+    // ========================================
+    "test": {
+      "connection": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+
+/*
+  SECURITY NOTES:
+  
+  ⚠️ DEVELOPMENT MODE:
+  The rules above are permissive for development/testing.
+  
+  🔐 PRODUCTION HARDENING (Optional):
+  If you want stricter rules, add authentication checks:
+  
+  "robot": {
+    "lastHeartbeat": {
+      ".read": true,
+      ".write": "auth != null",  // Only authenticated users/ESP32
+      ".validate": "newData.isNumber()"
+    },
+    "emergency": {
+      "active": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  }
+  
+  For production ESP32 token generation, use custom auth tokens
+  or Firebase custom claims.
+  
+  ⚡ CURRENT SETUP:
+  Perfect for single robot + single web dashboard scenario.
+  If adding multiple robots, use path-based unique IDs:
+  
+    "robots": {
+      "robot-001": { ... },
+      "robot-002": { ... }
+    }
+*/

@@ -1,0 +1,8 @@
+{
+  "web": {
+    "connection": {
+      "connected": true,
+      "source": "web"
+    }
+  }
+}

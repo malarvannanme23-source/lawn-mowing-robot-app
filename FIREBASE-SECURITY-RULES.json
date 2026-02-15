@@ -1,0 +1,96 @@
+{
+  "rules": {
+    // ========================================
+    // AUTHENTICATION REQUIREMENT: All access
+    // Only authenticated users (auth != null)
+    // ========================================
+
+    "web": {
+      "connection": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.val() === true || newData.val() === false"
+      }
+    },
+
+    "robot": {
+      // ========================================
+      // EMERGENCY CONTROL - Critical Safety
+      // Only authenticated users can control
+      // ========================================
+      "emergency": {
+        "active": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".validate": "newData.isBoolean()"
+        }
+      },
+
+      // ========================================
+      // ROBOT COMMAND STATE
+      // Only authenticated users can send commands
+      // ========================================
+      "command": {
+        "state": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".validate": "newData.isString()"
+        }
+      },
+
+      // ========================================
+      // HEARTBEAT (ESP32 WRITES TO CONFIRM ALIVE)
+      // Only authenticated users can write heartbeat
+      // Only authenticated users can read for monitoring
+      // ========================================
+      "lastHeartbeat": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.isNumber()"
+      },
+
+      // ========================================
+      // ROBOT STATUS - Live telemetry data
+      // Only authenticated users can read
+      // Only authenticated users can write (ESP32)
+      // ========================================
+      "status": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['speed', 'motor', 'blade', 'distance'])",
+        "speed": {
+          ".validate": "newData.isNumber()"
+        },
+        "motor": {
+          ".validate": "newData.isBoolean()"
+        },
+        "blade": {
+          ".validate": "newData.isBoolean()"
+        },
+        "distance": {
+          ".validate": "newData.isNumber() || newData.val() === null"
+        }
+      },
+
+      // ========================================
+      // BATTERY STATUS - Live battery data
+      // Only authenticated users can read
+      // Only authenticated users can write (ESP32)
+      // ========================================
+      "battery": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['level', 'voltage', 'status'])",
+        "level": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "voltage": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "status": {
+          ".validate": "newData.isString()"
+        }
+      }
+    }
+  }
+}
